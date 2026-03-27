@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quiz</title>
+<style>
+    :root {
+        --primary: #0052cc;
+        --primary-soft: #eaf2ff;
+        --border: #d6dde8;
+        --surface: #ffffff;
+        --page: linear-gradient(180deg, #f4f7fb 0%, #edf2f9 100%);
+        --text: #1f2a37;
+        --muted: #5f6b7a;
+        --success: #2e7d32;
+        --danger: #c62828;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: 32px 16px 48px;
+        font-family: Arial, sans-serif;
+        background: var(--page);
+        color: var(--text);
+    }
+
+    .app-shell {
+        max-width: 920px;
+        margin: 0 auto;
+    }
+
+    .hero {
+        margin-bottom: 20px;
+        padding: 24px 28px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+        border: 1px solid rgba(0, 82, 204, 0.12);
+        box-shadow: 0 12px 32px rgba(31, 42, 55, 0.08);
+    }
+
+    .hero-badge {
+        display: inline-block;
+        margin-bottom: 10px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 34px;
+        line-height: 1.15;
+    }
+
+    .hero-subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+    }
+
+    #card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 0 12px 32px rgba(31, 42, 55, 0.08);
+    }
+
+    .question {
+        font-size: 22px;
+        line-height: 1.45;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .question img,
+    .option img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 12px 0;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+    }
+
+    .option {
+        margin: 10px 0;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: #f9fbfd;
+        cursor: pointer;
+        transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .option:hover {
+        background: #f3f8ff;
+        border-color: #bfd3ff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 82, 204, 0.08);
+    }
+
+    .option input {
+        margin-right: 10px;
+    }
+
+    #matchingBlock .match-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--order);
+        border-radius: 14px;
+        background: #f9fbfd;
+    }
+
+    #matchingBlock strong {
+        line-height: 1.4;
+    }
+
+    select {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+    }
+
+    #result {
+        min-height: 28px;
+        margin-top: 18px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    #result.success {
+        color: var(--success);
+    }
+
+    #result.error {
+        color: var(--danger);
+    }
+
+    .actions {
+        margin-top: 18px;
+    }
+
+    button {
+        margin-top: 18px;
+        padding: 11px 18px;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: var(--primary);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(0, 82, 204, 0.18);
+        transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(0, 82, 204, 0.22);
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .secondary-button {
+        background: #fff;
+        color: var(--primary);
+        border-color: #bfd3ff;
+        box-shadow: none;
+    }
+
+    .loading-note {
+        color: var(--muted);
+        font-size: 15px;
+    }
+
+    @media (max-width: 720px) {
+        .hero,
+        #card {
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+        }
+
+        #matchingBlock .match-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="app-shell">
+    <div class="hero">
+        <div class="hero-badge">Quiz Trainer</div>
+        <h1>Learning Quiz</h1>
+        <p class="hero-subtitle">Practice single choice, multi-choice, and matching questions from the extracted dataset.</p>
+    </div>
+
+    <div id="card">
+        <div class="question" id="questionText">Loading questions...</div>
+        <div id="options"></div>
+        <div id="matchingBlock"></div>
+        <div id="result" class="loading-note"></div>
+        <div class="actions">
+            <button id="nextButton" class="secondary-button" onclick="nextQuestion()" disabled>Skip / Next Question</button>
+        </div>
+    </div>
+</div>
+
+<script src="./questions.js"></script>
+<script>
+// ================================================
+// QUESTION DATA
+// ================================================
+let questions = window.questionsData || [];
+
+// ================================================
+// COOKIE HANDLING
+// ================================================
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)'));
+    return match ? JSON.parse(match[2]) : {};
+}
+
+function setCookie(name, value) {
+    document.cookie = `${name}=${JSON.stringify(value)}; path=/; max-age=31536000`;
+}
+
+let wrongStats = getCookie("wrongAnswers");
+let current = null;
+
+function setResult(message = "", kind = "") {
+    const result = document.getElementById("result");
+    result.className = kind;
+    result.innerText = message;
+}
+
+function setLoadingState(message, isError = false) {
+    document.getElementById("questionText").innerText = message;
+    document.getElementById("options").innerHTML = "";
+    document.getElementById("matchingBlock").innerHTML = "";
+    document.getElementById("nextButton").disabled = true;
+    setResult(isError ? "Unable to load questions.js." : "", isError ? "error" : "loading-note");
+}
+
+// ================================================
+// RANDOM + WEIGHTED QUESTION SELECTION
+// ================================================
+function pickQuestion() {
+    let weighted = [];
+
+    questions.forEach((q, index) => {
+        const wrong = wrongStats[index] || 0;
+        const weight = 1 + wrong * 3;  // increase probability by wrong count
+        for (let i = 0; i < weight; i++) weighted.push(index);
+    });
+
+    return weighted[Math.floor(Math.random() * weighted.length)];
+}
+
+// ================================================
+// MAIN LOAD FUNCTION
+// ================================================
+function loadQuestion() {
+    const q = questions[current];
+    document.getElementById("questionText").innerHTML = q.q;
+    document.getElementById("options").innerHTML = "";
+    document.getElementById("matchingBlock").innerHTML = "";
+    document.getElementById("nextButton").disabled = false;
+    setResult("");
+
+    if (q.type === "single") loadSingleChoice(q);
+    if (q.type === "multi") loadMultiChoice(q);
+    if (q.type === "match") loadMatching(q);
+}
+
+// ================================================
+// SINGLE CHOICE
+// ================================================
+function loadSingleChoice(q) {
+    const box = document.getElementById("options");
+    q.options.forEach((opt, index) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerHTML = opt;
+
+        div.onclick = () => {
+            if (q.answer.includes(index)) {
+                setResult("Correct.", "success");
+                nextQuestion();
+            } else {
+                recordWrong();
+                setResult("Incorrect.", "error");
+            }
+        };
+        box.appendChild(div);
+    });
+}
+
+// ================================================
+// MULTI CHOICE
+// ================================================
+function loadMultiChoice(q) {
+    const box = document.getElementById("options");
+    q.options.forEach((opt, index) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerHTML = `<label><input type='checkbox' value='${index}'> ${opt}</label>`;
+        box.appendChild(div);
+    });
+
+    const btn = document.createElement("button");
+    btn.innerText = "Check";
+    btn.onclick = () => checkMultiAnswer(q);
+    box.appendChild(btn);
+}
+
+function checkMultiAnswer(q) {
+    const chosen = [...document.querySelectorAll("input[type='checkbox']:checked")].map(c => Number(c.value));
+    const correct = q.answer;
+
+    if (chosen.length === correct.length && chosen.every(v => correct.includes(v))) {
+        setResult("Correct.", "success");
+        nextQuestion();
+    } else {
+        recordWrong();
+        setResult("Incorrect.", "error");
+    }
+}
+
+// ================================================
+// MATCHING
+// ================================================
+function loadMatching(q) {
+    const block = document.getElementById("matchingBlock");
+
+    q.left.forEach((leftItem, index) => {
+        const row = document.createElement("div");
+        row.className = "match-row";
+        row.innerHTML = `
+            <strong>${leftItem}</strong>
+            <select id='match_${index}'>
+                <option value=''>Select</option>
+                ${q.right.map(r => `<option value='${r}'>${r}</option>`).join("")}
+            </select>
+        `;
+        block.appendChild(row);
+    });
+
+    const btn = document.createElement("button");
+    btn.innerText = "Check Matching";
+    btn.onclick = () => checkMatching(q);
+    block.appendChild(btn);
+}
+
+function checkMatching(q) {
+    for (let index = 0; index < q.left.length; index++) {
+        const key = q.left[index];
+        const user = document.getElementById(`match_${index}`).value;
+        if (user !== q.answer[key]) {
+            recordWrong();
+            setResult("Incorrect.", "error");
+            return;
+        }
+    }
+    setResult("Correct.", "success");
+    nextQuestion();
+}
+
+// ================================================
+// WRONG ANSWER TRACKING
+// ================================================
+function recordWrong() {
+    wrongStats[current] = (wrongStats[current] || 0) + 1;
+    setCookie("wrongAnswers", wrongStats);
+}
+
+// ================================================
+// NEXT QUESTION
+// ================================================
+function nextQuestion() {
+    if (!questions.length) return;
+    current = pickQuestion();
+    loadQuestion();
+}
+
+function init() {
+    setLoadingState("Loading questions...");
+    if (!Array.isArray(questions) || !questions.length) {
+        setLoadingState("Quiz failed to start.", true);
+        return;
+    }
+
+    current = pickQuestion();
+    loadQuestion();
+}
+
+init();
+</script>
+
+</body>
+</html>
